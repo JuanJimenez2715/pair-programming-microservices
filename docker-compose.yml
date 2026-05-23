@@ -119,6 +119,8 @@ services:
   ms-auth:
     build: ./ms-auth
     container_name: pp_ms_auth
+    environment:
+      - OTEL_SERVICE_NAME=ms-auth
     ports:
       - "3001:3000"
     environment:
@@ -131,6 +133,8 @@ services:
   ms-pairing:
     build: ./ms-pairing
     container_name: pp_ms_pairing
+    environment:
+      - OTEL_SERVICE_NAME=ms-pairing
     ports:
       - "3002:3000"
     environment:
@@ -180,6 +184,18 @@ services:
     depends_on:
       - kafka
       - influxdb
+    networks:
+      - pp-network
+
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: pp_jaeger
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    ports:
+      - "16686:16686"
+      - "4318:4318"
     networks:
       - pp-network
 
