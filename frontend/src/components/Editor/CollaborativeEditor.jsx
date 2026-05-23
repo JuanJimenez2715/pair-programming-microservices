@@ -5,7 +5,7 @@ import { WebsocketProvider } from 'y-websocket';
 import { MonacoBinding } from 'y-monaco';
 import { useAuth } from '../../hooks/useAuth';
 
-const CollaborativeEditor = ({ sessionId, role }) => {
+const CollaborativeEditor = ({ sessionId, role, onEditorMount }) => {
   const editorRef = useRef(null);
   const { user } = useAuth();
   const [language, setLanguage] = useState('javascript');

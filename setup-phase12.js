@@ -1,4 +1,38 @@
-import { useEffect, useState, useRef } from 'react';
+const fs = require('fs');
+const path = require('path');
+
+// 1. Update ms-editor app.js
+const appJsPath = path.join(__dirname, 'ms-editor/src/app.js');
+let appJsContent = fs.readFileSync(appJsPath, 'utf8');
+
+appJsContent = appJsContent.replace(
+  "redisPubSub.publish(`session:${suggestion.sessionId}:ai-suggestions`, suggestion);",
+  "redisPubSub.publish('ai-suggestions-broadcast', suggestion);"
+);
+
+if (!appJsContent.includes("redisPubSub.subscribe('ai-suggestions-broadcast'")) {
+  const subscribeCode = `
+redisPubSub.subscribe('ai-suggestions-broadcast', (message) => {
+  try {
+    const suggestion = typeof message === 'string' ? JSON.parse(message) : message;
+    io.to(suggestion.sessionId).emit('ai-suggestion', suggestion);
+  } catch(e) {
+    logger.error('Error parsing broadcast suggestion', e);
+  }
+});
+`;
+  const serverListenPos = appJsContent.indexOf('server.listen(env.port');
+  appJsContent = appJsContent.slice(0, serverListenPos) + subscribeCode + appJsContent.slice(serverListenPos);
+  
+  fs.writeFileSync(appJsPath, appJsContent);
+}
+
+// 2. Add AI panel to Session.jsx
+const sessionPath = path.join(__dirname, 'frontend/src/pages/Session.jsx');
+let sessionContent = fs.readFileSync(sessionPath, 'utf8');
+
+if (!sessionContent.includes('aiSuggestions')) {
+  sessionContent = `import { useEffect, useState, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import sessionService from '../services/session.service';
 import { useWebSocket } from '../hooks/useWebSocket';
@@ -49,7 +83,7 @@ const Session = () => {
     
     try {
       // Direct call to ms-editor sync endpoint.
-      await fetch(`http://localhost:3003/api/editor/${id}/sync`, {
+      await fetch(\`http://localhost:3003/api/editor/\${id}/sync\`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code, language: 'javascript', userId: user?.sub || user?.id || 'unknown' })
@@ -69,10 +103,10 @@ const Session = () => {
       <div className="workspace-header glass-panel">
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
           <h2>Pair Programming Session</h2>
-          <span className={`badge ${isConnected ? 'active' : 'waiting'}`}>
+          <span className={\`badge \${isConnected ? 'active' : 'waiting'}\`}>
             WS: {isConnected ? 'Connected' : 'Connecting...'}
           </span>
-          <span className={`badge ${session.status}`}>{session.status}</span>
+          <span className={\`badge \${session.status}\`}>{session.status}</span>
         </div>
         
         <div className="header-actions">
@@ -98,7 +132,7 @@ const Session = () => {
             <ul className="participant-list">
               {session.SessionUsers?.map(su => (
                 <li key={su.userId}>
-                  <span className={`role-badge ${su.role}`}>{su.role}</span>
+                  <span className={\`role-badge \${su.role}\`}>{su.role}</span>
                   User: {su.userId.split('-')[0]}
                 </li>
               ))}
@@ -131,4 +165,24 @@ const Session = () => {
   );
 };
 
-export default Session;
+export default Session;`;
+
+  fs.writeFileSync(sessionPath, sessionContent);
+}
+
+// 3. Update CollaborativeEditor to expose the instance
+const colabEditorPath = path.join(__dirname, 'frontend/src/components/Editor/CollaborativeEditor.jsx');
+let colabEditorContent = fs.readFileSync(colabEditorPath, 'utf8');
+if (!colabEditorContent.includes('onEditorMount')) {
+  colabEditorContent = colabEditorContent.replace(
+    'const CollaborativeEditor = ({ sessionId, role }) => {',
+    'const CollaborativeEditor = ({ sessionId, role, onEditorMount }) => {'
+  );
+  colabEditorContent = colabEditorContent.replace(
+    'const handleEditorDidMount = (editor, monaco) => {\\n    editorRef.current = editor;\\n  };',
+    'const handleEditorDidMount = (editor, monaco) => {\\n    editorRef.current = editor;\\n    if (onEditorMount) onEditorMount(editor);\\n  };'
+  );
+  fs.writeFileSync(colabEditorPath, colabEditorContent);
+}
+
+console.log('Phase 12 Frontend AI Integration complete');

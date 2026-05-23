@@ -50,9 +50,18 @@ wss.on('connection', (ws, req) => {
 kafkaProducer.connect();
 kafkaConsumer.connect((suggestion) => {
   // Broadcast AI suggestion via Redis so all instances can push it to their WebSockets
-  redisPubSub.publish(`session:${suggestion.sessionId}:ai-suggestions`, suggestion);
+  redisPubSub.publish('ai-suggestions-broadcast', suggestion);
 });
 
+
+redisPubSub.subscribe('ai-suggestions-broadcast', (message) => {
+  try {
+    const suggestion = typeof message === 'string' ? JSON.parse(message) : message;
+    io.to(suggestion.sessionId).emit('ai-suggestion', suggestion);
+  } catch(e) {
+    logger.error('Error parsing broadcast suggestion', e);
+  }
+});
 server.listen(env.port, () => {
   logger.info(`ms-editor WebSocket server running on port ${env.port}`);
 });
