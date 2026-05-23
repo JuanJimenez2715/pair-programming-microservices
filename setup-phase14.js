@@ -1,4 +1,8 @@
-_format_version: "3.0"
+const fs = require('fs');
+const path = require('path');
+const { execSync } = require('child_process');
+
+const kongYml = `_format_version: "3.0"
 
 services:
   - name: ms-auth
@@ -78,3 +82,15 @@ plugins:
       header_name: X-Trace-ID
       generator: uuid
       echo_downstream: true
+`;
+
+fs.writeFileSync(path.join(__dirname, 'api-gateway/kong.yml'), kongYml);
+
+console.log('Restarting Kong to apply the new declarative configuration...');
+try {
+  execSync('docker compose restart kong', { cwd: __dirname, stdio: 'inherit' });
+  console.log('Phase 14 Kong Gateway Refinement complete');
+} catch (e) {
+  console.error('Warning: could not restart Kong container via docker-compose. It may not be running currently.', e.message);
+  console.log('Phase 14 Kong Gateway Refinement complete');
+}

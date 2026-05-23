@@ -12,8 +12,47 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./infrastructure/scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
-    
-  \n  ms-editor:\n    build: ./ms-editor\n    container_name: pp_ms_editor\n    ports:\n      - "3003:3000"\n    environment:\n      - PORT=3000\n    
+    networks:
+      - pp-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mongodb:
+    image: mongo:7
+    container_name: pp_mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - pp-network
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: pp_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - pp-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   zookeeper:
     image: confluentinc/cp-zookeeper:7.5.0
     container_name: pp_zookeeper
@@ -61,19 +100,7 @@ services:
       - kafka
     networks:
       - pp-network
-\nnetworks:\n      - pp-network\n  
-  ms-ai:
-    build: ./ms-ai
-    container_name: pp_ms_ai
-    ports:
-      - "8080:8080"
-    environment:
-      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
-    depends_on:
-      - kafka
-    networks:
-      - pp-network
-  
+
   influxdb:
     image: influxdb:2.7
     container_name: pp_influxdb
@@ -86,6 +113,55 @@ services:
       DOCKER_INFLUXDB_INIT_ORG: pair-programming
       DOCKER_INFLUXDB_INIT_BUCKET: metrics
       DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: my-super-secret-auth-token
+    networks:
+      - pp-network
+
+  ms-auth:
+    build: ./ms-auth
+    container_name: pp_ms_auth
+    ports:
+      - "3001:3000"
+    environment:
+      - PORT=3000
+    depends_on:
+      - postgres
+    networks:
+      - pp-network
+
+  ms-pairing:
+    build: ./ms-pairing
+    container_name: pp_ms_pairing
+    ports:
+      - "3002:3000"
+    environment:
+      - PORT=3000
+    depends_on:
+      - postgres
+    networks:
+      - pp-network
+
+  ms-editor:
+    build: ./ms-editor
+    container_name: pp_ms_editor
+    ports:
+      - "3003:3000"
+    environment:
+      - PORT=3000
+    depends_on:
+      - redis
+      - kafka
+    networks:
+      - pp-network
+
+  ms-ai:
+    build: ./ms-ai
+    container_name: pp_ms_ai
+    ports:
+      - "8080:8080"
+    environment:
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+    depends_on:
+      - kafka
     networks:
       - pp-network
 
@@ -106,6 +182,7 @@ services:
       - influxdb
     networks:
       - pp-network
+
   kong:
     build: ./api-gateway
     container_name: pp_api_gateway
@@ -126,46 +203,6 @@ services:
       - pp-network
     healthcheck:
       test: ["CMD", "kong", "health"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-\nnetworks:
-      - pp-network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U admin"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  mongodb:
-    image: mongo:7
-    container_name: pp_mongodb
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: admin
-      MONGO_INITDB_ROOT_PASSWORD: password
-    ports:
-      - "27017:27017"
-    volumes:
-      - mongodb_data:/data/db
-    networks:
-      - pp-network
-    healthcheck:
-      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  redis:
-    image: redis:7-alpine
-    container_name: pp_redis
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-    networks:
-      - pp-network
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
