@@ -1,7 +1,19 @@
 const express = require('express');
+const cors = require('cors');
+const env = require('./config/env');
+const sequelize = require('./config/db');
+const sessionRoutes = require('./routes/session.routes');
+const errorMiddleware = require('./middlewares/error.middleware');
+const logger = require('./utils/logger');
+
 const app = express();
+app.use(cors());
+app.use(express.json());
 
-app.get('/health', (req, res) => res.json({ status: 'ok', service: 'ms-pairing' }));
+app.use('/api/sessions', sessionRoutes);
+app.get('/health', (req, res) => res.send('OK'));
+app.use(errorMiddleware);
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`ms-pairing running on port ${PORT}`));
+sequelize.sync().then(() => {
+  app.listen(env.port, () => logger.info(`ms-pairing running on port ${env.port}`));
+}).catch(err => logger.error('DB connection failed', err));
