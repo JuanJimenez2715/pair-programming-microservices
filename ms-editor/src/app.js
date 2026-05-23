@@ -1,3 +1,5 @@
+const kafkaProducer = require('./services/kafkaProducer.service');
+const kafkaConsumer = require('./services/kafkaConsumer.service');
 const redisPubSub = require('./services/redis.service');
 const sessionCache = require('./services/sessionCache.service');
 const express = require('express');
@@ -14,6 +16,16 @@ const socketHandler = require('./websocket/socketHandler');
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+
+app.post('/api/editor/:sessionId/sync', async (req, res) => {
+  const { sessionId } = req.params;
+  const { code, language, userId } = req.body;
+  
+  // Publish to Kafka
+  await kafkaProducer.sendCodeEvent(sessionId, { fullCode: code }, language || 'javascript', userId || 'unknown');
+  res.send({ status: 'sync_requested' });
+});
 
 app.get('/health', (req, res) => res.send('OK'));
 
@@ -32,6 +44,13 @@ socketHandler(io);
 const wss = new WebSocketServer({ server });
 wss.on('connection', (ws, req) => {
   setupWSConnection(ws, req);
+});
+
+// Initialize Kafka
+kafkaProducer.connect();
+kafkaConsumer.connect((suggestion) => {
+  // Broadcast AI suggestion via Redis so all instances can push it to their WebSockets
+  redisPubSub.publish(`session:${suggestion.sessionId}:ai-suggestions`, suggestion);
 });
 
 server.listen(env.port, () => {
