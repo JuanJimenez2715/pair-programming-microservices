@@ -1,7 +1,30 @@
 const express = require('express');
+const http = require('http');
+const { Server } = require('socket.io');
+const cors = require('cors');
+const env = require('./config/env');
+const logger = require('./utils/logger');
+const wsAuthMiddleware = require('./middlewares/wsAuth.middleware');
+const socketHandler = require('./websocket/socketHandler');
+
 const app = express();
+app.use(cors());
+app.use(express.json());
 
-app.get('/health', (req, res) => res.json({ status: 'ok', service: 'ms-editor' }));
+app.get('/health', (req, res) => res.send('OK'));
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`ms-editor running on port ${PORT}`));
+const server = http.createServer(app);
+
+const io = new Server(server, {
+  cors: {
+    origin: '*', // For development. Should be restricted in production.
+    methods: ['GET', 'POST']
+  }
+});
+
+io.use(wsAuthMiddleware);
+socketHandler(io);
+
+server.listen(env.port, () => {
+  logger.info(`ms-editor WebSocket server running on port ${env.port}`);
+});

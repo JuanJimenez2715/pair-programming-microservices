@@ -13,7 +13,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./infrastructure/scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
     
-  kong:
+  \n  ms-editor:\n    build: ./ms-editor\n    container_name: pp_ms_editor\n    ports:\n      - "3003:3000"\n    environment:\n      - PORT=3000\n    networks:\n      - pp-network\n  kong:
     build: ./api-gateway
     container_name: pp_api_gateway
     environment:

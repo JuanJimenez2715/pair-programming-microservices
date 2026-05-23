@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import sessionService from '../services/session.service';
+import { useWebSocket } from '../hooks/useWebSocket';
 
 const Session = () => {
   const { id } = useParams();
   const [session, setSession] = useState(null);
+  const { isConnected } = useWebSocket(id);
 
   useEffect(() => {
     const fetchSession = async () => {
@@ -24,7 +26,12 @@ const Session = () => {
     <div className="session-workspace fade-in">
       <div className="workspace-header glass-panel">
         <h2>Pair Programming Session</h2>
-        <span className={`badge ${session.status}`}>{session.status}</span>
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <span className={`badge ${isConnected ? 'active' : 'waiting'}`}>
+            WS: {isConnected ? 'Connected' : 'Connecting...'}
+          </span>
+          <span className={`badge ${session.status}`}>{session.status}</span>
+        </div>
       </div>
       
       <div className="workspace-main">
