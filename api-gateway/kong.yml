@@ -14,7 +14,15 @@ services:
       - name: pairing-route
         paths:
           - /api/sessions
-        plugins:
+        
+  - name: ms-analytics
+    url: http://ms-analytics:4000
+    routes:
+      - name: analytics-route
+        paths:
+          - /api/analytics
+
+plugins:
           - name: proxy-cache
             config:
               strategy: memory

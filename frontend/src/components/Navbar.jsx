@@ -19,6 +19,7 @@ const Navbar = () => {
         {user ? (
           <>
             <span className="user-badge">{user.role}</span>
+            <Link to="/analytics" style={{ color: "white", textDecoration: "none", marginRight: "1rem" }}>📊 Analytics</Link>
             <span className="user-email">{user.email || user.sub}</span>
             <button onClick={handleLogout} className="btn-secondary">Logout</button>
           </>
