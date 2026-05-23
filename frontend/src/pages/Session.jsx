@@ -2,11 +2,14 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import sessionService from '../services/session.service';
 import { useWebSocket } from '../hooks/useWebSocket';
+import CollaborativeEditor from '../components/Editor/CollaborativeEditor';
+import { useAuth } from '../hooks/useAuth';
 
 const Session = () => {
   const { id } = useParams();
   const [session, setSession] = useState(null);
   const { isConnected } = useWebSocket(id);
+  const { user } = useAuth();
 
   useEffect(() => {
     const fetchSession = async () => {
@@ -35,9 +38,14 @@ const Session = () => {
       </div>
       
       <div className="workspace-main">
-        <div className="editor-placeholder glass-panel">
-          <p>Editor Component (Monaco + Yjs) will be injected here in Phase 7</p>
-        </div>
+        {session ? (() => {
+          const myRole = session.SessionUsers?.find(su => su.userId === user?.sub || su.userId === user?.id)?.role || 'navigator';
+          return (
+            <div className="editor-container glass-panel" style={{ flex: 3, overflow: 'hidden' }}>
+              <CollaborativeEditor sessionId={session.id} role={myRole} />
+            </div>
+          );
+        })() : null}
         <div className="sidebar glass-panel">
           <h3>Participants</h3>
           <ul className="participant-list">

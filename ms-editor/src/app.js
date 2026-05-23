@@ -1,6 +1,8 @@
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
+const { WebSocketServer } = require('ws');
+const setupWSConnection = require('y-websocket/bin/utils').setupWSConnection;
 const cors = require('cors');
 const env = require('./config/env');
 const logger = require('./utils/logger');
@@ -24,6 +26,11 @@ const io = new Server(server, {
 
 io.use(wsAuthMiddleware);
 socketHandler(io);
+
+const wss = new WebSocketServer({ server });
+wss.on('connection', (ws, req) => {
+  setupWSConnection(ws, req);
+});
 
 server.listen(env.port, () => {
   logger.info(`ms-editor WebSocket server running on port ${env.port}`);
