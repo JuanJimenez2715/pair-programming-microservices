@@ -61,7 +61,19 @@ services:
       - kafka
     networks:
       - pp-network
-\nnetworks:\n      - pp-network\n  kong:
+\nnetworks:\n      - pp-network\n  
+  ms-ai:
+    build: ./ms-ai
+    container_name: pp_ms_ai
+    ports:
+      - "8080:8080"
+    environment:
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+    depends_on:
+      - kafka
+    networks:
+      - pp-network
+  kong:
     build: ./api-gateway
     container_name: pp_api_gateway
     environment:
