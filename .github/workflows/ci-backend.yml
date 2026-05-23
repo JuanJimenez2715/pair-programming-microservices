@@ -1,0 +1,70 @@
+name: Backend CI
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'ms-*/**'
+      - '.github/workflows/ci-backend.yml'
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - 'ms-*/**'
+
+jobs:
+  test-node-services:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [ms-auth, ms-pairing, ms-editor, ms-analytics]
+        node-version: [20.x]
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+        cache-dependency-path: ${{ matrix.service }}/package-lock.json
+        
+    - name: Install dependencies
+      run: |
+        cd ${{ matrix.service }}
+        if [ -f package.json ]; then npm ci || npm install; fi
+
+    - name: Run lint (if exists)
+      run: |
+        cd ${{ matrix.service }}
+        if npm run | grep -q "lint"; then npm run lint; fi
+
+    # In future phases we will add 'npm test' here once tests are implemented
+
+  test-python-services:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [ms-ai]
+        python-version: ["3.11"]
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+        cache: 'pip'
+
+    - name: Install dependencies
+      run: |
+        cd ${{ matrix.service }}
+        python -m pip install --upgrade pip
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+    - name: Run lint (flake8)
+      run: |
+        pip install flake8
+        cd ${{ matrix.service }}
+        flake8 app/ --count --select=E9,F63,F7,F82 --show-source --statistics
