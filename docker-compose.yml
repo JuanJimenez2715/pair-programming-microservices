@@ -13,7 +13,55 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./infrastructure/scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
     
-  \n  ms-editor:\n    build: ./ms-editor\n    container_name: pp_ms_editor\n    ports:\n      - "3003:3000"\n    environment:\n      - PORT=3000\n    networks:\n      - pp-network\n  kong:
+  \n  ms-editor:\n    build: ./ms-editor\n    container_name: pp_ms_editor\n    ports:\n      - "3003:3000"\n    environment:\n      - PORT=3000\n    
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: pp_zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    networks:
+      - pp-network
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: pp_kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    networks:
+      - pp-network
+    healthcheck:
+      test: ["CMD", "kafka-topics", "--bootstrap-server", "localhost:9092", "--list"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: pp_kafka_ui
+    ports:
+      - "9090:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
+    depends_on:
+      - kafka
+    networks:
+      - pp-network
+\nnetworks:\n      - pp-network\n  kong:
     build: ./api-gateway
     container_name: pp_api_gateway
     environment:
