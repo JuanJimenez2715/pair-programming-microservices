@@ -1,3 +1,5 @@
+const redisPubSub = require('./services/redis.service');
+const sessionCache = require('./services/sessionCache.service');
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
