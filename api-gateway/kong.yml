@@ -1,2 +1,70 @@
 _format_version: "3.0"
+
 services:
+  - name: ms-auth
+    url: http://ms-auth:3000
+    routes:
+      - name: auth-route
+        paths:
+          - /api/auth
+
+  - name: ms-pairing
+    url: http://ms-pairing:3000
+    routes:
+      - name: pairing-route
+        paths:
+          - /api/sessions
+
+  - name: ms-editor
+    url: http://ms-editor:3000
+    routes:
+      - name: editor-route
+        paths:
+          - /api/editor
+
+  - name: ms-ai
+    url: http://ms-ai:8080
+    routes:
+      - name: ai-route
+        paths:
+          - /api/ai
+
+plugins:
+  - name: cors
+    config:
+      origins:
+        - '*'
+      methods:
+        - GET
+        - POST
+        - PUT
+        - PATCH
+        - DELETE
+        - OPTIONS
+      headers:
+        - Accept
+        - Accept-Version
+        - Content-Length
+        - Content-MD5
+        - Content-Type
+        - Date
+        - Authorization
+      exposed_headers:
+        - X-Trace-ID
+      credentials: true
+      max_age: 3600
+
+  - name: rate-limiting
+    config:
+      minute: 100
+      policy: local
+
+  - name: correlation-id
+    config:
+      header_name: X-Trace-ID
+      generator: uuid
+      echo_downstream: true
+
+  # JWT is prepared but needs consumers to be fully enforced. 
+  # We will attach it specific routes when ms-auth is fully ready.
+  # - name: jwt
