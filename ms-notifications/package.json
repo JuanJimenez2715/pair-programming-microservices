@@ -1,0 +1,12 @@
+{
+  "name": "ms-notifications",
+  "version": "1.0.0",
+  "description": "Microservice for ms-notifications",
+  "main": "src/app.js",
+  "scripts": {
+    "start": "node src/app.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}

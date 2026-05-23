@@ -1,0 +1,12 @@
+{
+  "name": "ms-pairing",
+  "version": "1.0.0",
+  "description": "Microservice for ms-pairing",
+  "main": "src/app.js",
+  "scripts": {
+    "start": "node src/app.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
