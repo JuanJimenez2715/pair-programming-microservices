@@ -199,6 +199,16 @@ services:
     networks:
       - pp-network
 
+  
+  frontend:
+    build: ./frontend
+    container_name: pp_frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - kong
+    networks:
+      - pp-network
   kong:
     build: ./api-gateway
     container_name: pp_api_gateway
