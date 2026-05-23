@@ -4,6 +4,14 @@ const { execSync } = require('child_process');
 console.log('🚀 Iniciando Pair Programming Platform (Local)...\n');
 
 try {
+  try {
+    execSync('docker info', { stdio: 'ignore' });
+  } catch (e) {
+    console.error('\n❌ ERROR CRÍTICO: Docker no está corriendo o no se pudo conectar al demonio de Docker.');
+    console.error('👉 Por favor, asegúrate de tener la aplicación "Docker Desktop" abierta y corriendo en tu computadora antes de iniciar la plataforma.\n');
+    process.exit(1);
+  }
+
   console.log('📦 Levantando contenedores (Docker Compose)...');
   execSync('docker compose up -d', { stdio: 'inherit' });
   

@@ -121,10 +121,9 @@ services:
     container_name: pp_ms_auth
     environment:
       - OTEL_SERVICE_NAME=ms-auth
+      - PORT=3000
     ports:
       - "3001:3000"
-    environment:
-      - PORT=3000
     depends_on:
       - postgres
     networks:
@@ -135,10 +134,9 @@ services:
     container_name: pp_ms_pairing
     environment:
       - OTEL_SERVICE_NAME=ms-pairing
+      - PORT=3000
     ports:
       - "3002:3000"
-    environment:
-      - PORT=3000
     depends_on:
       - postgres
     networks:
@@ -187,6 +185,57 @@ services:
     networks:
       - pp-network
 
+  ms-evaluation:
+    build: ./ms-evaluation
+    container_name: pp_ms_evaluation
+    ports:
+      - "3004:3000"
+    environment:
+      - PORT=3000
+    depends_on:
+      - kafka
+    networks:
+      - pp-network
+
+  ms-exercises:
+    build: ./ms-exercises
+    container_name: pp_ms_exercises
+    ports:
+      - "3005:3000"
+    environment:
+      - PORT=3000
+    networks:
+      - pp-network
+
+  ms-notifications:
+    build: ./ms-notifications
+    container_name: pp_ms_notifications
+    ports:
+      - "3006:3000"
+    environment:
+      - PORT=3000
+    networks:
+      - pp-network
+
+  ms-reports:
+    build: ./ms-reports
+    container_name: pp_ms_reports
+    ports:
+      - "3007:3000"
+    environment:
+      - PORT=3000
+    networks:
+      - pp-network
+
+  ms-metrics:
+    build: ./ms-metrics
+    container_name: pp_ms_metrics
+    ports:
+      - "3008:3000"
+    environment:
+      - PORT=3000
+    networks:
+      - pp-network
 
   jaeger:
     image: jaegertracing/all-in-one:latest

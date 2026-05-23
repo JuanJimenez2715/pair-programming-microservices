@@ -6,7 +6,12 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const { WebSocketServer } = require('ws');
-const setupWSConnection = require('y-websocket/bin/utils').setupWSConnection;
+let setupWSConnection;
+try {
+  setupWSConnection = require('./y-websocket-utils.js').setupWSConnection;
+} catch (e) {
+  console.log('Could not load y-websocket utils', e);
+}
 const cors = require('cors');
 const env = require('./config/env');
 const logger = require('./utils/logger');
@@ -41,9 +46,23 @@ const io = new Server(server, {
 io.use(wsAuthMiddleware);
 socketHandler(io);
 
-const wss = new WebSocketServer({ server });
+const wss = new WebSocketServer({ noServer: true });
+
+server.on('upgrade', (request, socket, head) => {
+  if (request.url.startsWith('/socket.io/')) {
+    // Let socket.io handle this, do nothing here
+    return;
+  }
+  wss.handleUpgrade(request, socket, head, (ws) => {
+    wss.emit('connection', ws, request);
+  });
+});
+
 wss.on('connection', (ws, req) => {
-  setupWSConnection(ws, req);
+  ws.on('error', (err) => logger.error('WebSocket Error', err));
+  if (setupWSConnection) {
+    setupWSConnection(ws, req);
+  }
 });
 
 // Initialize Kafka

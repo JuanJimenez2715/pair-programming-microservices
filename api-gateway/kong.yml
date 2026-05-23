@@ -7,6 +7,7 @@ services:
       - name: auth-route
         paths:
           - /api/auth
+        strip_path: false
 
   - name: ms-pairing
     url: http://ms-pairing:3000
@@ -14,15 +15,8 @@ services:
       - name: pairing-route
         paths:
           - /api/sessions
-        
-  - name: ms-analytics
-    url: http://ms-analytics:4000
-    routes:
-      - name: analytics-route
-        paths:
-          - /api/analytics
-
-plugins:
+        strip_path: false
+        plugins:
           - name: proxy-cache
             config:
               strategy: memory
@@ -32,12 +26,21 @@ plugins:
               request_method:
                 - GET
 
+  - name: ms-analytics
+    url: http://ms-analytics:4000
+    routes:
+      - name: analytics-route
+        paths:
+          - /api/analytics
+        strip_path: false
+
   - name: ms-editor
     url: http://ms-editor:3000
     routes:
       - name: editor-route
         paths:
           - /api/editor
+        strip_path: false
         plugins:
           - name: rate-limiting
             config:
@@ -50,6 +53,47 @@ plugins:
       - name: ai-route
         paths:
           - /api/ai
+        strip_path: false
+
+  - name: ms-evaluation
+    url: http://ms-evaluation:3000
+    routes:
+      - name: evaluation-route
+        paths:
+          - /api/evaluations
+        strip_path: false
+
+  - name: ms-exercises
+    url: http://ms-exercises:3000
+    routes:
+      - name: exercises-route
+        paths:
+          - /api/exercises
+        strip_path: false
+
+  - name: ms-notifications
+    url: http://ms-notifications:3000
+    routes:
+      - name: notifications-route
+        paths:
+          - /api/notifications
+        strip_path: false
+
+  - name: ms-reports
+    url: http://ms-reports:3000
+    routes:
+      - name: reports-route
+        paths:
+          - /api/reports
+        strip_path: false
+
+  - name: ms-metrics
+    url: http://ms-metrics:3000
+    routes:
+      - name: metrics-route
+        paths:
+          - /api/metrics
+        strip_path: false
 
 plugins:
   - name: cors
