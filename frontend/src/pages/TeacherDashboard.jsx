@@ -1,17 +1,26 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import sessionService from '../services/session.service';
+import exerciseService from '../services/exercise.service';
 import { useAuth } from '../hooks/useAuth';
-import { Users, MonitorPlay, Activity, BarChart3, Eye, CheckCircle, Clock, BookOpen, GraduationCap, Code2 } from 'lucide-react';
+import { Users, MonitorPlay, Activity, BarChart3, Eye, CheckCircle, Clock, BookOpen, GraduationCap, Code2, Plus, Trash2 } from 'lucide-react';
 
 const TeacherDashboard = () => {
   const [sessions, setSessions] = useState([]);
+  const [exercises, setExercises] = useState([]);
   const [loadingSessions, setLoadingSessions] = useState(true);
+  const [loadingExercises, setLoadingExercises] = useState(true);
+  
+  // Exercise form state
+  const [showExerciseForm, setShowExerciseForm] = useState(false);
+  const [newExercise, setNewExercise] = useState({ title: '', description: '', difficulty: 'Medium', language: 'javascript' });
+
   const navigate = useNavigate();
   const { user } = useAuth();
 
   useEffect(() => {
     loadSessions();
+    loadExercises();
   }, []);
 
   const loadSessions = async () => {
@@ -22,6 +31,39 @@ const TeacherDashboard = () => {
       console.error(err);
     } finally {
       setLoadingSessions(false);
+    }
+  };
+
+  const loadExercises = async () => {
+    try {
+      const data = await exerciseService.getExercises();
+      setExercises(data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoadingExercises(false);
+    }
+  };
+
+  const handleCreateExercise = async (e) => {
+    e.preventDefault();
+    try {
+      await exerciseService.createExercise(newExercise);
+      setNewExercise({ title: '', description: '', difficulty: 'Medium', language: 'javascript' });
+      setShowExerciseForm(false);
+      loadExercises();
+    } catch (err) {
+      console.error('Failed to create exercise', err);
+    }
+  };
+
+  const handleDeleteExercise = async (id) => {
+    if (!window.confirm('¿Eliminar este ejercicio?')) return;
+    try {
+      await exerciseService.deleteExercise(id);
+      loadExercises();
+    } catch (err) {
+      console.error('Failed to delete exercise', err);
     }
   };
 
@@ -91,6 +133,88 @@ const TeacherDashboard = () => {
           </div>
         </div>
       </div>
+
+      {/* Exercises Section */}
+      <div className="section-header" style={{ marginTop: '2rem' }}>
+        <h2><BookOpen size={22} /> Ejercicios / Retos</h2>
+        <button className="btn-primary" onClick={() => setShowExerciseForm(!showExerciseForm)}>
+          <Plus size={18} /> Nuevo Ejercicio
+        </button>
+      </div>
+
+      {showExerciseForm && (
+        <form className="auth-form glass-panel" onSubmit={handleCreateExercise} style={{ marginBottom: '2rem' }}>
+          <h3>Crear Nuevo Ejercicio</h3>
+          <div className="form-group">
+            <label>Título del Ejercicio</label>
+            <input type="text" required value={newExercise.title} onChange={e => setNewExercise({...newExercise, title: e.target.value})} placeholder="Ej: Calculadora en Python" />
+          </div>
+          <div className="form-group">
+            <label>Descripción / Instrucciones</label>
+            <textarea required value={newExercise.description} onChange={e => setNewExercise({...newExercise, description: e.target.value})} rows={3} placeholder="Describe lo que deben construir..."></textarea>
+          </div>
+          <div style={{ display: 'flex', gap: '1rem' }}>
+            <div className="form-group" style={{ flex: 1 }}>
+              <label>Lenguaje</label>
+              <select value={newExercise.language} onChange={e => setNewExercise({...newExercise, language: e.target.value})}>
+                <option value="javascript">JavaScript</option>
+                <option value="python">Python</option>
+                <option value="java">Java</option>
+              </select>
+            </div>
+            <div className="form-group" style={{ flex: 1 }}>
+              <label>Dificultad</label>
+              <select value={newExercise.difficulty} onChange={e => setNewExercise({...newExercise, difficulty: e.target.value})}>
+                <option value="Easy">Básico</option>
+                <option value="Medium">Intermedio</option>
+                <option value="Hard">Avanzado</option>
+              </select>
+            </div>
+          </div>
+          <button type="submit" className="btn-primary">Guardar Ejercicio</button>
+        </form>
+      )}
+
+      {loadingExercises ? (
+        <div className="loader" style={{ height: '100px' }}>Cargando ejercicios...</div>
+      ) : (
+        <div className="teacher-sessions-table glass-panel" style={{ overflowX: 'auto', marginBottom: '2rem' }}>
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Título</th>
+                <th>Descripción</th>
+                <th>Lenguaje</th>
+                <th>Dificultad</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {exercises.length === 0 ? (
+                <tr>
+                  <td colSpan="5" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
+                    No hay ejercicios creados.
+                  </td>
+                </tr>
+              ) : (
+                exercises.map(ex => (
+                  <tr key={ex._id}>
+                    <td><strong>{ex.title}</strong></td>
+                    <td>{ex.description.length > 50 ? ex.description.substring(0, 50) + '...' : ex.description}</td>
+                    <td><span className="badge-lang">{ex.language}</span></td>
+                    <td><span className={`badge-difficulty ${ex.difficulty.toLowerCase()}`}>{ex.difficulty}</span></td>
+                    <td>
+                      <button className="btn-secondary btn-sm" onClick={() => handleDeleteExercise(ex._id)} style={{ color: 'var(--danger)' }}>
+                        <Trash2 size={14} /> Eliminar
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {/* Active Sessions Section */}
       <div className="section-header">

@@ -1,17 +1,21 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import sessionService from '../services/session.service';
+import exerciseService from '../services/exercise.service';
 import { useAuth } from '../hooks/useAuth';
-import { Plus, Users, MonitorPlay, Activity, ArrowRight, Frown, BookOpen, Clock, CheckCircle, Code2 } from 'lucide-react';
+import { Plus, Users, MonitorPlay, Activity, ArrowRight, Frown, BookOpen, Clock, CheckCircle, Code2, Play } from 'lucide-react';
 
 const StudentDashboard = () => {
   const [sessions, setSessions] = useState([]);
+  const [exercises, setExercises] = useState([]);
+  const [selectedExercise, setSelectedExercise] = useState('');
   const [loadingSessions, setLoadingSessions] = useState(true);
   const navigate = useNavigate();
   const { user } = useAuth();
 
   useEffect(() => {
     loadSessions();
+    loadExercises();
   }, []);
 
   const loadSessions = async () => {
@@ -25,9 +29,21 @@ const StudentDashboard = () => {
     }
   };
 
+  const loadExercises = async () => {
+    try {
+      const data = await exerciseService.getExercises();
+      setExercises(data);
+      if (data.length > 0) {
+        setSelectedExercise(data[0]._id);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const handleCreate = async () => {
     try {
-      const session = await sessionService.createSession();
+      const session = await sessionService.createSession(selectedExercise);
       navigate(`/session/${session.id}`);
     } catch (err) {
       console.error(err);
@@ -61,13 +77,28 @@ const StudentDashboard = () => {
               ¡Hola, {user?.firstName || 'Estudiante'}! 👋
             </h1>
             <p className="welcome-subtitle">
-              Bienvenido a tu espacio de pair programming. Crea o únete a una sesión para comenzar a programar.
+              Bienvenido a tu espacio de pair programming. Selecciona un reto y crea una sesión para comenzar.
             </p>
           </div>
         </div>
-        <button className="btn-primary btn-lg" onClick={handleCreate} id="create-session-btn">
-          <Plus size={20} /> Nueva Sesión
-        </button>
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          {exercises.length > 0 ? (
+            <select 
+              value={selectedExercise} 
+              onChange={(e) => setSelectedExercise(e.target.value)}
+              style={{ padding: '0.8rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.5)', color: 'white' }}
+            >
+              {exercises.map(ex => (
+                <option key={ex._id} value={ex._id}>{ex.title} ({ex.language})</option>
+              ))}
+            </select>
+          ) : (
+            <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Cargando retos...</span>
+          )}
+          <button className="btn-primary btn-lg" onClick={handleCreate} disabled={!selectedExercise} id="create-session-btn">
+            <Play size={20} /> Empezar Reto
+          </button>
+        </div>
       </div>
 
       {/* Stats Row */}
@@ -169,9 +200,6 @@ const StudentDashboard = () => {
               <Frown className="empty-state-icon" style={{ margin: '0 auto 1rem', width: 48, height: 48 }} />
               <h3>No hay sesiones disponibles</h3>
               <p>Crea tu primera sesión de pair programming para comenzar.</p>
-              <button className="btn-primary" onClick={handleCreate} style={{ marginTop: '1.5rem' }}>
-                <Plus size={18} /> Crear Primera Sesión
-              </button>
             </div>
           )}
         </div>

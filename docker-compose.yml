@@ -205,6 +205,9 @@ services:
       - "3005:3000"
     environment:
       - PORT=3000
+      - MONGO_URL=mongodb://admin:password@mongodb:27017/exercises?authSource=admin
+    depends_on:
+      - mongodb
     networks:
       - pp-network
 

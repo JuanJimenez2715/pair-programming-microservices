@@ -1,14 +1,16 @@
 import { useEffect, useState, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import sessionService from '../services/session.service';
+import exerciseService from '../services/exercise.service';
 import { useWebSocket } from '../hooks/useWebSocket';
 import CollaborativeEditor from '../components/Editor/CollaborativeEditor';
 import { useAuth } from '../hooks/useAuth';
-import { Play, Terminal as TerminalIcon } from 'lucide-react';
+import { Play, Terminal as TerminalIcon, BookOpen } from 'lucide-react';
 
 const Session = () => {
   const { id } = useParams();
   const [session, setSession] = useState(null);
+  const [exercise, setExercise] = useState(null);
   const { socket, isConnected } = useWebSocket(id);
   const { user } = useAuth();
   
@@ -21,15 +23,22 @@ const Session = () => {
   const [isExecuting, setIsExecuting] = useState(false);
 
   useEffect(() => {
-    const fetchSession = async () => {
+    const fetchSessionAndExercise = async () => {
       try {
         const data = await sessionService.getSessionById(id);
         setSession(data);
+        if (data.exerciseId) {
+          const exData = await exerciseService.getExerciseById(data.exerciseId);
+          setExercise(exData);
+          if (exData.language) {
+            setLanguage(exData.language);
+          }
+        }
       } catch (err) {
         console.error(err);
       }
     };
-    fetchSession();
+    fetchSessionAndExercise();
   }, [id]);
 
   useEffect(() => {
@@ -156,7 +165,12 @@ const Session = () => {
             <CollaborativeEditor 
               sessionId={session.id} 
               role={myRole} 
-              onEditorMount={(editor) => editorRef.current = editor}
+              onEditorMount={(editor) => {
+                editorRef.current = editor;
+                if (exercise && exercise.initialCode && !editor.getValue()) {
+                  editor.setValue(exercise.initialCode);
+                }
+              }}
               language={language}
               setLanguage={setLanguage}
             />
@@ -178,6 +192,21 @@ const Session = () => {
         </div>
         
         <div className="sidebar" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', flex: 1 }}>
+          {exercise && (
+            <div className="glass-panel" style={{ padding: '1rem', background: 'rgba(59, 130, 246, 0.1)' }}>
+              <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--primary)' }}>
+                <BookOpen size={18} /> {exercise.title}
+              </h3>
+              <p style={{ fontSize: '0.9rem', marginTop: '0.5rem', whiteSpace: 'pre-wrap' }}>
+                {exercise.description}
+              </p>
+              <div style={{ marginTop: '0.8rem', display: 'flex', gap: '0.5rem' }}>
+                <span className={`badge-difficulty ${exercise.difficulty.toLowerCase()}`}>{exercise.difficulty}</span>
+                <span className="badge-lang">{exercise.language}</span>
+              </div>
+            </div>
+          )}
+
           <div className="glass-panel" style={{ padding: '1rem' }}>
             <h3>Participantes</h3>
             <ul className="participant-list" style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
