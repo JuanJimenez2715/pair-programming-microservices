@@ -16,6 +16,7 @@ export const AuthProvider = ({ children }) => {
           setUser(userData);
         } catch (error) {
           localStorage.removeItem('token');
+          setUser(null);
         }
       }
       setLoading(false);
@@ -26,11 +27,13 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     const data = await authService.login(email, password);
     setUser(data.user);
+    return data.user; // Return user so caller can read role for redirect
   };
 
-  const register = async (email, password, role) => {
-    const data = await authService.register(email, password, role);
+  const register = async (formData) => {
+    const data = await authService.register(formData);
     setUser(data.user);
+    return data.user;
   };
 
   const logout = () => {
@@ -38,8 +41,16 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
+  /**
+   * Returns the correct dashboard path based on user role.
+   */
+  const getDashboardPath = (role) => {
+    if (role === 'teacher') return '/teacher/dashboard';
+    return '/student/dashboard';
+  };
+
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, loading }}>
+    <AuthContext.Provider value={{ user, login, register, logout, loading, getDashboardPath }}>
       {children}
     </AuthContext.Provider>
   );

@@ -55,10 +55,18 @@ body {
     radial-gradient(ellipse 80% 50% at 50% -20%, rgba(99, 102, 241, 0.15), transparent),
     radial-gradient(ellipse 60% 40% at 90% 80%, rgba(236, 72, 153, 0.1), transparent);
   background-attachment: fixed;
+  background-size: 200% 200%;
+  animation: gradientBG 15s ease infinite;
   color: var(--text-primary);
   min-height: 100vh;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
+}
+
+@keyframes gradientBG {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
 #root { display: flex; flex-direction: column; min-height: 100vh; }
@@ -176,10 +184,10 @@ button, .btn-primary, .btn-secondary, .btn-disabled {
   box-shadow: 0 4px 14px var(--primary-glow);
 }
 .btn-primary:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(99, 102, 241, 0.6);
 }
-.btn-primary:active { transform: translateY(0); }
+.btn-primary:active { transform: translateY(1px); }
 .btn-primary:disabled {
   opacity: 0.55;
   cursor: not-allowed;
@@ -396,14 +404,19 @@ input::placeholder { color: var(--text-muted); }
 .empty-state {
   grid-column: 1 / -1;
   text-align: center;
-  padding: 4rem 2rem;
+  padding: 5rem 2rem;
   color: var(--text-muted);
+  background: rgba(255,255,255,0.02);
+  border: 1px dashed var(--panel-border);
+  border-radius: var(--radius-lg);
+  backdrop-filter: blur(10px);
 }
 
 .empty-state-icon {
-  font-size: 3rem;
-  margin-bottom: 1rem;
+  font-size: 3.5rem;
+  margin-bottom: 1.5rem;
   display: block;
+  opacity: 0.6;
 }
 
 /* ===== BADGES ===== */
@@ -564,3 +577,220 @@ input::placeholder { color: var(--text-muted); }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.3); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(99, 102, 241, 0.5); }
+
+/* ===== NEW DASHBOARD STYLES ===== */
+.dashboard-welcome {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 2rem 2.5rem;
+  margin-bottom: 2rem;
+  background: linear-gradient(to right, rgba(17, 29, 53, 0.9), rgba(6, 11, 24, 0.95));
+  border-left: 4px solid var(--primary);
+}
+
+.teacher-welcome {
+  border-left-color: var(--secondary);
+}
+
+.welcome-content {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.welcome-icon-wrapper {
+  background: var(--primary-glow);
+  padding: 1rem;
+  border-radius: var(--radius-lg);
+  color: var(--primary);
+}
+
+.teacher-icon {
+  background: var(--secondary-glow);
+  color: var(--secondary);
+}
+
+.welcome-title {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.75rem;
+  color: var(--text-primary);
+}
+
+.welcome-subtitle {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 1rem;
+}
+
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2.5rem;
+}
+
+.mini-stat {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem 1.5rem;
+}
+
+.mini-stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.mini-stat-value {
+  display: block;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.mini-stat-label {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.section-header h2 {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0;
+  font-size: 1.35rem;
+  color: var(--text-primary);
+}
+
+.section-count {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  color: var(--text-subtle);
+}
+
+.session-title {
+  margin: 0.5rem 0;
+  font-size: 1.15rem;
+  line-height: 1.4;
+  color: var(--text-primary);
+}
+
+.session-meta {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.session-meta span {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.badge-lang {
+  background: rgba(255, 255, 255, 0.08);
+  color: #e2e8f0;
+  padding: 0.2rem 0.6rem;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+}
+
+.badge-difficulty {
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--radius-full);
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.badge-difficulty.beginner { background: rgba(16, 185, 129, 0.15); color: #34d399; }
+.badge-difficulty.intermediate { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+.badge-difficulty.advanced { background: rgba(239, 68, 68, 0.15); color: #f87171; }
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.data-table th {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--panel-border);
+  color: var(--text-subtle);
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.data-table td {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  vertical-align: middle;
+}
+
+.data-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.data-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.table-session-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+  color: #e2e8f0;
+}
+
+.table-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--text-muted);
+}
+
+.btn-sm {
+  padding: 0.4rem 0.8rem;
+  font-size: 0.8rem;
+}
+
+.role-badge {
+  padding: 0.1rem 0.5rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
+.role-badge.driver { background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.4); }
+.role-badge.navigator { background: rgba(139, 92, 246, 0.2); color: #a78bfa; border: 1px solid rgba(139, 92, 246, 0.4); }
+.role-badge.observer { background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4); }
+

@@ -1,17 +1,16 @@
-import { useRef, useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import Editor from '@monaco-editor/react';
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
 import { MonacoBinding } from 'y-monaco';
 import { useAuth } from '../../hooks/useAuth';
 
-const CollaborativeEditor = ({ sessionId, role, onEditorMount }) => {
-  const editorRef = useRef(null);
+const CollaborativeEditor = ({ sessionId, role, onEditorMount, language = 'javascript', setLanguage }) => {
+  const [editorInstance, setEditorInstance] = useState(null);
   const { user } = useAuth();
-  const [language, setLanguage] = useState('javascript');
 
   useEffect(() => {
-    if (!editorRef.current) return;
+    if (!editorInstance) return;
 
     // Initialize Yjs Document
     const ydoc = new Y.Doc();
@@ -28,15 +27,15 @@ const CollaborativeEditor = ({ sessionId, role, onEditorMount }) => {
     // Bind Yjs to Monaco
     const binding = new MonacoBinding(
       type, 
-      editorRef.current.getModel(), 
-      new Set([editorRef.current]), 
+      editorInstance.getModel(), 
+      new Set([editorInstance]), 
       provider.awareness
     );
 
     // Set Awareness (Cursor color and name)
     provider.awareness.setLocalStateField('user', {
-      name: user.email?.split('@')[0] || 'User',
-      color: role === 'driver' ? '#3b82f6' : '#8b5cf6'
+      name: user.firstName || user.email?.split('@')[0] || 'User',
+      color: role === 'driver' ? '#3b82f6' : role === 'observer' ? '#f59e0b' : '#8b5cf6'
     });
 
     return () => {
@@ -44,19 +43,21 @@ const CollaborativeEditor = ({ sessionId, role, onEditorMount }) => {
       provider.disconnect();
       ydoc.destroy();
     };
-  }, [sessionId, user, role]);
+  }, [sessionId, user, role, editorInstance]);
 
   const handleEditorDidMount = (editor, monaco) => {
-    editorRef.current = editor;
+    setEditorInstance(editor);
+    if (onEditorMount) onEditorMount(editor);
   };
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <div style={{ padding: '0.5rem', display: 'flex', justifyContent: 'space-between' }}>
+      <div style={{ padding: '0.5rem', display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--panel-border)' }}>
         <select 
           value={language} 
-          onChange={(e) => setLanguage(e.target.value)}
-          style={{ padding: '0.5rem', borderRadius: '4px', background: 'rgba(0,0,0,0.3)', color: 'white', border: '1px solid rgba(255,255,255,0.1)' }}
+          onChange={(e) => setLanguage && setLanguage(e.target.value)}
+          style={{ padding: '0.3rem 0.6rem', borderRadius: '4px', background: 'rgba(0,0,0,0.3)', color: 'white', border: '1px solid rgba(255,255,255,0.1)' }}
+          disabled={role !== 'driver'}
         >
           <option value="javascript">JavaScript</option>
           <option value="python">Python</option>
@@ -71,7 +72,7 @@ const CollaborativeEditor = ({ sessionId, role, onEditorMount }) => {
           language={language}
           onMount={handleEditorDidMount}
           options={{
-            readOnly: role === 'navigator',
+            readOnly: role !== 'driver',
             minimap: { enabled: false },
             fontSize: 14,
             wordWrap: 'on'
