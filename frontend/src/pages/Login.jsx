@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { LogIn, Code2, AlertCircle } from 'lucide-react';
+import { LogIn, Code2, AlertCircle, CheckCircle } from 'lucide-react';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -10,6 +10,8 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const { login, getDashboardPath } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const successMessage = location.state?.message || '';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -36,6 +38,17 @@ const Login = () => {
         </div>
         <h2>Bienvenido de Nuevo</h2>
         <p className="auth-subtitle">Ingresa a la plataforma académica IntelliPair</p>
+
+        {successMessage && !error && (
+          <div className="alert-success" style={{ 
+            display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center', 
+            backgroundColor: 'rgba(46, 204, 113, 0.1)', color: '#2ecc71', 
+            padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem', 
+            border: '1px solid rgba(46, 204, 113, 0.3)' 
+          }}>
+            <CheckCircle size={18} /> <span>{successMessage}</span>
+          </div>
+        )}
 
         {error && (
           <div className="alert-error" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center' }}>

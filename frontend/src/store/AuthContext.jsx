@@ -32,7 +32,7 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (formData) => {
     const data = await authService.register(formData);
-    setUser(data.user);
+    // User is NOT logged in automatically upon registration
     return data.user;
   };
 

@@ -11,9 +11,7 @@ const authService = {
 
   register: async ({ email, password, firstName, lastName, role }) => {
     const res = await api.post('/auth/register', { email, password, firstName, lastName, role });
-    if (res.data.tokens) {
-      localStorage.setItem('token', res.data.tokens.access.token);
-    }
+    // Token is no longer saved automatically upon registration
     return res.data;
   },
 

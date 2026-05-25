@@ -13,7 +13,7 @@ const Register = () => {
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { register, getDashboardPath } = useAuth();
+  const { register } = useAuth();
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -25,8 +25,8 @@ const Register = () => {
     setError('');
     setLoading(true);
     try {
-      const user = await register(formData);
-      navigate(getDashboardPath(user.role));
+      await register(formData);
+      navigate('/login', { state: { message: 'Registro exitoso. Por favor, inicia sesión.' } });
     } catch (err) {
       setError(err.response?.data?.error || err.response?.data?.message || 'Error en el registro. Verifica los datos.');
     } finally {
