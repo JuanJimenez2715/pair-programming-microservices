@@ -83,27 +83,54 @@ const Session = () => {
     setTimeout(() => {
       try {
         if (language === 'javascript') {
-          // Capturar console.log para la terminal local
-          const originalLog = console.log;
           let logs = [];
-          console.log = (...args) => {
-            logs.push(args.map(a => typeof a === 'object' ? JSON.stringify(a) : a).join(' '));
+          
+          const customConsole = {
+            log: (...args) => logs.push(args.map(a => typeof a === 'object' ? JSON.stringify(a) : a).join(' ')),
+            error: (...args) => logs.push('[Error]: ' + args.map(a => typeof a === 'object' ? JSON.stringify(a) : a).join(' ')),
+            warn: (...args) => logs.push('[Warn]: ' + args.map(a => typeof a === 'object' ? JSON.stringify(a) : a).join(' ')),
+            info: (...args) => logs.push('[Info]: ' + args.map(a => typeof a === 'object' ? JSON.stringify(a) : a).join(' ')),
+          };
+          
+          const customAlert = (msg) => {
+            logs.push(`[Alert pop-up]: ${msg}`);
+            window.alert(msg);
+          };
+          
+          const customPrompt = (msg, def) => {
+            logs.push(`[Prompt pop-up]: ${msg}`);
+            const res = window.prompt(msg, def);
+            logs.push(`> Usuario respondió: ${res}`);
+            return res;
           };
           
           try {
-            // eslint-disable-next-line no-eval
-            eval(code);
+            // Usamos new Function para inyectar nuestras variables de entorno de forma segura
+            // Evitamos modificar los objetos globales originales.
+            // Envolvemos en un return para poder obtener resultados directos si los hay (opcional).
+            const runner = new Function('console', 'alert', 'prompt', 'window', `
+              ${code}
+            `);
+            
+            // Pasamos 'window' mockeado con nuestras funciones por si hacen window.alert
+            const mockWindow = { alert: customAlert, prompt: customPrompt, console: customConsole };
+            
+            const result = runner(customConsole, customAlert, customPrompt, mockWindow);
+            
+            if (result !== undefined && typeof result !== 'function') {
+              logs.push(`\n[Retorno]: ${typeof result === 'object' ? JSON.stringify(result) : result}`);
+            }
             setTerminalOutput(`> Output:\n${logs.join('\n') || '(Sin salida)'}\n\n> Proceso finalizó con código: 0`);
           } catch (err) {
-            setTerminalOutput(`> Error de compilación / ejecución:\n${err.toString()}`);
-          } finally {
-            console.log = originalLog;
+            setTerminalOutput(`> Error de ejecución:\n${err.toString()}`);
           }
         } 
         else if (language === 'python') {
+          // Un mock muy básico para Python
           if (code.includes('print')) {
-            const matches = code.match(/print\(['"]([^'"]+)['"]\)/g);
-            const outputs = matches ? matches.map(m => m.replace(/print\(['"]([^'"]+)['"]\)/, '$1')).join('\n') : 'Simulated Python Output...';
+            // Intentar extraer cualquier cosa dentro de print(...) de forma muy cruda
+            const matches = code.match(/print\((.*)\)/g);
+            const outputs = matches ? matches.map(m => m.replace(/print\((.*)\)/, '$1').replace(/['"]/g, '')).join('\n') : 'Simulated Python Output...';
             setTerminalOutput(`> Output (Python Mock):\n${outputs}\n\n> Proceso finalizó con código: 0`);
           } else {
             setTerminalOutput(`> Output (Python Mock):\n(Código ejecutado sin errores, pero no hay outputs impresos)\n\n> Proceso finalizó con código: 0`);
@@ -210,16 +237,26 @@ const Session = () => {
           <div className="glass-panel" style={{ padding: '1rem' }}>
             <h3>Participantes</h3>
             <ul className="participant-list" style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
-              {session.SessionUsers?.map(su => (
-                <li key={su.userId} style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
-                  <span className={`role-badge ${su.role}`}>{su.role}</span>
-                  <span>{su.userId.split('-')[0]}</span>
-                </li>
-              ))}
+              {session.SessionUsers?.map((su, index) => {
+                const isMe = su.userId === (user?.sub || user?.id);
+                let displayName = '';
+                if (isMe) {
+                  displayName = user?.firstName ? `Tú (${user.firstName})` : 'Tú';
+                } else {
+                  displayName = user?.role === 'teacher' ? `Estudiante ${index + 1}` : 'Tu Compañero';
+                }
+                
+                return (
+                  <li key={su.userId} style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+                    <span className={`role-badge ${su.role}`}>{su.role}</span>
+                    <span>{displayName}</span>
+                  </li>
+                );
+              })}
               {myRole === 'observer' && (
                 <li style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', color: 'var(--secondary)' }}>
                   <span className="role-badge observer">observer</span>
-                  <span>{user?.firstName} (Profesor)</span>
+                  <span>{user?.firstName} (Tú - Profesor)</span>
                 </li>
               )}
             </ul>
