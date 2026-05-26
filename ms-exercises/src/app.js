@@ -17,12 +17,11 @@ app.use('/api/exercises', exerciseRoutes);
 const PORT = process.env.PORT || 3000;
 const MONGO_URL = process.env.MONGO_URL || 'mongodb://admin:password@mongodb:27017/exercises?authSource=admin';
 
-mongoose.connect(MONGO_URL, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-}).then(() => {
-  console.log('Connected to MongoDB');
-  app.listen(PORT, () => console.log(`ms-exercises running on port ${PORT}`));
-}).catch(err => {
-  console.error('Failed to connect to MongoDB', err);
-});
+mongoose.connect(MONGO_URL)
+  .then(() => {
+    console.log('Connected to MongoDB');
+    app.listen(PORT, () => console.log(`ms-exercises running on port ${PORT}`));
+  })
+  .catch(err => {
+    console.error('Failed to connect to MongoDB', err);
+  });

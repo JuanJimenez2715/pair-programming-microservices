@@ -1,12 +1,14 @@
 {
   "name": "ms-notifications",
   "version": "1.0.0",
-  "description": "Microservice for ms-notifications",
   "main": "src/app.js",
   "scripts": {
-    "start": "node src/app.js"
+    "start": "node src/app.js",
+    "dev": "nodemon src/app.js"
   },
   "dependencies": {
-    "express": "^4.18.2"
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "socket.io": "^4.7.2"
   }
 }

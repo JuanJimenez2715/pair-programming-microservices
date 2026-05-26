@@ -3,15 +3,15 @@ import { useNavigate } from 'react-router-dom';
 import sessionService from '../services/session.service';
 import exerciseService from '../services/exercise.service';
 import { useAuth } from '../hooks/useAuth';
-import { Users, MonitorPlay, Activity, BarChart3, Eye, CheckCircle, Clock, BookOpen, GraduationCap, Code2, Plus, Trash2 } from 'lucide-react';
+import { Users, MonitorPlay, Activity, BarChart3, Eye, CheckCircle, Clock, BookOpen, GraduationCap, Code2, Plus, Trash2, Play } from 'lucide-react';
 
 const TeacherDashboard = () => {
   const [sessions, setSessions] = useState([]);
   const [exercises, setExercises] = useState([]);
   const [loadingSessions, setLoadingSessions] = useState(true);
   const [loadingExercises, setLoadingExercises] = useState(true);
-  
-  // Exercise form state
+  const [selectedExercise, setSelectedExercise] = useState('');
+
   const [showExerciseForm, setShowExerciseForm] = useState(false);
   const [newExercise, setNewExercise] = useState({ title: '', description: '', difficulty: 'Medium', language: 'javascript' });
 
@@ -38,10 +38,20 @@ const TeacherDashboard = () => {
     try {
       const data = await exerciseService.getExercises();
       setExercises(data);
+      if (data.length > 0) setSelectedExercise(data[0]._id);
     } catch (err) {
       console.error(err);
     } finally {
       setLoadingExercises(false);
+    }
+  };
+
+  const handleCreateSession = async () => {
+    try {
+      const session = await sessionService.createSession(selectedExercise);
+      navigate(`/session/${session.id}`);
+    } catch (err) {
+      console.error('Failed to create session', err);
     }
   };
 
@@ -89,9 +99,25 @@ const TeacherDashboard = () => {
             </p>
           </div>
         </div>
-        <button className="btn-primary btn-lg" onClick={() => navigate('/analytics')} id="view-analytics-btn">
-          <BarChart3 size={20} /> Ver Analíticas
-        </button>
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+          {exercises.length > 0 && (
+            <select
+              value={selectedExercise}
+              onChange={(e) => setSelectedExercise(e.target.value)}
+              style={{ padding: '0.8rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.5)', color: 'white' }}
+            >
+              {exercises.map(ex => (
+                <option key={ex._id} value={ex._id}>{ex.title} ({ex.language})</option>
+              ))}
+            </select>
+          )}
+          <button className="btn-primary btn-lg" onClick={handleCreateSession} disabled={!selectedExercise}>
+            <Play size={20} /> Nueva Sesión
+          </button>
+          <button className="btn-primary btn-lg" onClick={() => navigate('/analytics')} id="view-analytics-btn">
+            <BarChart3 size={20} /> Ver Analíticas
+          </button>
+        </div>
       </div>
 
       {/* Stats Row */}
@@ -193,7 +219,7 @@ const TeacherDashboard = () => {
               {exercises.length === 0 ? (
                 <tr>
                   <td colSpan="5" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
-                    No hay ejercicios creados.
+                    No hay ejercicios creados aún. Crea el primero con el botón de arriba.
                   </td>
                 </tr>
               ) : (
@@ -216,7 +242,7 @@ const TeacherDashboard = () => {
         </div>
       )}
 
-      {/* Active Sessions Section */}
+      {/* Sessions Section */}
       <div className="section-header">
         <h2><MonitorPlay size={22} /> Sesiones de Estudiantes</h2>
         <span className="section-count">{sessions.length} total</span>

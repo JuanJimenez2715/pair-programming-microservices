@@ -30,6 +30,28 @@ class InfluxQueryService {
       });
     });
   }
+
+  async getCollaborationStats() {
+    const fluxQuery = `
+      from(bucket: "${bucket}")
+        |> range(start: -7d)
+        |> filter(fn: (r) => r._measurement == "collaboration_events")
+        |> filter(fn: (r) => r._field == "count")
+        |> group(columns: ["sessionId", "eventType"])
+        |> sum()
+    `;
+    const results = [];
+    return new Promise((resolve, reject) => {
+      queryApi.queryRows(fluxQuery, {
+        next(row, tableMeta) {
+          const o = tableMeta.toObject(row);
+          results.push({ sessionId: o.sessionId, eventType: o.eventType, total: o._value });
+        },
+        error(err) { reject(err); },
+        complete() { resolve(results); },
+      });
+    });
+  }
 }
 
 module.exports = new InfluxQueryService();

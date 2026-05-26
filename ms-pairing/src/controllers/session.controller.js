@@ -2,7 +2,7 @@ const sessionService = require('../services/session.service');
 
 const createSession = async (req, res, next) => {
   try {
-    const session = await sessionService.createSession(req.user.sub, req.body.exerciseId);
+    const session = await sessionService.createSession(req.user.sub, req.body.exerciseId, req.body);
     res.status(201).send(session);
   } catch (error) { next(error); }
 };
