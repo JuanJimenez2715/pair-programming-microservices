@@ -154,11 +154,16 @@ const Session = () => {
     ? 'observer' 
     : (session.SessionUsers?.find(su => su.userId === user?.sub || su.userId === user?.id)?.role || 'navigator');
 
+  // Diverse fallback title
+  const fallbackTitles = ["Práctica de Algoritmos", "Desafío de Lógica", "Estructuras de Datos", "Optimización de Código", "Pair Programming Libre"];
+  const randomFallback = session ? fallbackTitles[session.id.charCodeAt(0) % fallbackTitles.length] : "Cargando...";
+  const sessionTitle = session?.title || (session?.exerciseId ? 'Reto Asignado' : randomFallback);
+
   return (
     <div className="session-workspace fade-in" style={{ height: 'calc(100vh - 80px)', display: 'flex', flexDirection: 'column' }}>
       <div className="workspace-header glass-panel" style={{ flexShrink: 0 }}>
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-          <h2>Sesión de Programación</h2>
+          <h2>{sessionTitle}</h2>
           <span className={`badge ${isConnected ? 'active' : 'waiting'}`}>
             {isConnected ? '🟢 Conectado' : '🟠 Conectando...'}
           </span>
@@ -194,8 +199,8 @@ const Session = () => {
               role={myRole} 
               onEditorMount={(editor) => {
                 editorRef.current = editor;
-                if (exercise && exercise.initialCode && !editor.getValue()) {
-                  editor.setValue(exercise.initialCode);
+                if (exercise && exercise.initialCode) {
+                  window.initialCodeForEditor = exercise.initialCode;
                 }
               }}
               language={language}

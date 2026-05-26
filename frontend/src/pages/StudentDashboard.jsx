@@ -93,10 +93,10 @@ const StudentDashboard = () => {
               ))}
             </select>
           ) : (
-            <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Cargando retos...</span>
+            <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Sin retos disponibles. Inicia en modo libre.</span>
           )}
-          <button className="btn-primary btn-lg" onClick={handleCreate} disabled={!selectedExercise} id="create-session-btn">
-            <Play size={20} /> Empezar Reto
+          <button className="btn-primary btn-lg" onClick={handleCreate} id="create-session-btn">
+            <Play size={20} /> {exercises.length > 0 ? 'Empezar Reto' : 'Modo Libre'}
           </button>
         </div>
       </div>
@@ -154,9 +154,16 @@ const StudentDashboard = () => {
           {sessions.map(s => {
             const isParticipant = s.SessionUsers?.some(u => u.userId === user?.id || u.userId === user?.sub);
             const isFull = s.SessionUsers?.length >= 2;
+            
+            if (isFull && !isParticipant) return null; // Ocultar sesiones llenas a los que no participan
+
             const courseName = s.settings?.course || 'Sin curso asignado';
             const lang = s.settings?.language || 'javascript';
             const difficulty = s.settings?.difficulty || 'beginner';
+
+            const fallbackTitles = ["Práctica de Algoritmos", "Desafío de Lógica", "Estructuras de Datos", "Optimización de Código", "Pair Programming Libre"];
+            const randomFallback = fallbackTitles[s.id.charCodeAt(0) % fallbackTitles.length];
+            const sessionTitle = s.title || (s.exerciseId ? 'Reto Asignado' : randomFallback);
 
             return (
               <div key={s.id} className="session-card glass-panel" style={{ display: 'flex', flexDirection: 'column' }}>
@@ -165,7 +172,7 @@ const StudentDashboard = () => {
                   <span className="badge-lang">{lang}</span>
                 </div>
 
-                <h3 className="session-title">{s.title || 'Sesión sin título'}</h3>
+                <h3 className="session-title">{sessionTitle}</h3>
 
                 <div className="session-meta">
                   <span><BookOpen size={14} /> {courseName}</span>
@@ -184,13 +191,9 @@ const StudentDashboard = () => {
                     </button>
                   ) : !isFull && s.status !== 'completed' ? (
                     <button className="btn-secondary full-width" onClick={() => handleJoin(s.id)} id={`join-session-${s.id}`}>
-                      Unirse como Navegador
+                      Unirse a Sesión
                     </button>
-                  ) : (
-                    <button className="btn-disabled full-width" disabled>
-                      {s.status === 'completed' ? 'Finalizada' : 'Sesión Llena'}
-                    </button>
-                  )}
+                  ) : null}
                 </div>
               </div>
             );

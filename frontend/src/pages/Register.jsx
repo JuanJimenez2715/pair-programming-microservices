@@ -13,7 +13,7 @@ const Register = () => {
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { register } = useAuth();
+  const { register, login } = useAuth();
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -26,7 +26,15 @@ const Register = () => {
     setLoading(true);
     try {
       await register(formData);
-      navigate('/login', { state: { message: 'Registro exitoso. Por favor, inicia sesión.' } });
+      
+      if (formData.role === 'student') {
+        // Solo auto-login para estudiantes
+        const user = await login(formData.email, formData.password);
+        navigate('/student/dashboard');
+      } else {
+        // Los profesores deben ir al login y probablemente requerir validación
+        navigate('/login', { state: { message: 'Registro exitoso. Inicia sesión como profesor.' } });
+      }
     } catch (err) {
       setError(err.response?.data?.error || err.response?.data?.message || 'Error en el registro. Verifica los datos.');
     } finally {

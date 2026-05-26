@@ -273,17 +273,21 @@ const TeacherDashboard = () => {
                 </tr>
               ) : (
                 sessions.map(s => {
-                  const courseName = s.settings?.course || '—';
-                  const lang = s.settings?.language || '—';
-                  const difficulty = s.settings?.difficulty || '—';
+                  const courseName = s.settings?.course || 'General';
+                  const lang = s.settings?.language || 'javascript';
+                  const difficulty = s.settings?.difficulty || 'beginner';
                   const participantCount = s.SessionUsers?.length || 0;
+                  
+                  const fallbackTitles = ["Práctica de Algoritmos", "Desafío de Lógica", "Estructuras de Datos", "Optimización de Código", "Pair Programming Libre"];
+                  const randomFallback = fallbackTitles[s.id.charCodeAt(0) % fallbackTitles.length];
+                  const sessionTitle = s.title || (s.exerciseId ? 'Reto Asignado' : randomFallback);
 
                   return (
                     <tr key={s.id}>
                       <td>
-                        <div className="table-session-title">
+                        <div className="table-session-title" title={s.id}>
                           <Code2 size={16} color="var(--primary)" />
-                          <span>{s.title || s.id.substring(0, 12) + '...'}</span>
+                          <span>{sessionTitle} ({s.id.substring(0, 8)})</span>
                         </div>
                       </td>
                       <td><span className="table-tag"><BookOpen size={12} /> {courseName}</span></td>

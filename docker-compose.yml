@@ -149,6 +149,9 @@ services:
       - "3003:3000"
     environment:
       - PORT=3000
+      - YPERSISTENCE=/app/data
+    volumes:
+      - ms_editor_data:/app/data
     depends_on:
       - redis
       - kafka
@@ -294,3 +297,4 @@ volumes:
   postgres_data:
   mongodb_data:
   redis_data:
+  ms_editor_data:

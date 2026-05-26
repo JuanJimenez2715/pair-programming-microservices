@@ -15,9 +15,10 @@ const CollaborativeEditor = ({ sessionId, role, onEditorMount, language = 'javas
     // Initialize Yjs Document
     const ydoc = new Y.Doc();
     
-    // Connect to y-websocket server (ms-editor running on 3003)
+    // Connect to y-websocket server using dynamic hostname to support LAN
+    const wsUrl = `ws://${window.location.hostname}:3003`;
     const provider = new WebsocketProvider(
-      'ws://localhost:3003',
+      wsUrl,
       sessionId,
       ydoc
     );
@@ -36,6 +37,16 @@ const CollaborativeEditor = ({ sessionId, role, onEditorMount, language = 'javas
     provider.awareness.setLocalStateField('user', {
       name: user.firstName || user.email?.split('@')[0] || 'User',
       color: role === 'driver' ? '#3b82f6' : role === 'observer' ? '#f59e0b' : '#8b5cf6'
+    });
+
+    // Handle initial code injection securely only after sync
+    provider.on('synced', isSynced => {
+      if (isSynced && type.toString().trim() === '') {
+        if (window.initialCodeForEditor) {
+          type.insert(0, window.initialCodeForEditor);
+          window.initialCodeForEditor = null; // Consume it
+        }
+      }
     });
 
     return () => {
@@ -57,7 +68,6 @@ const CollaborativeEditor = ({ sessionId, role, onEditorMount, language = 'javas
           value={language} 
           onChange={(e) => setLanguage && setLanguage(e.target.value)}
           style={{ padding: '0.3rem 0.6rem', borderRadius: '4px', background: 'rgba(0,0,0,0.3)', color: 'white', border: '1px solid rgba(255,255,255,0.1)' }}
-          disabled={role !== 'driver'}
         >
           <option value="javascript">JavaScript</option>
           <option value="python">Python</option>
@@ -72,7 +82,7 @@ const CollaborativeEditor = ({ sessionId, role, onEditorMount, language = 'javas
           language={language}
           onMount={handleEditorDidMount}
           options={{
-            readOnly: role !== 'driver',
+            readOnly: false,
             minimap: { enabled: false },
             fontSize: 14,
             wordWrap: 'on'
